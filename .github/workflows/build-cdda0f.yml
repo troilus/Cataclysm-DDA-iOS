@@ -47,7 +47,7 @@ jobs:
     - name: Build CDDA0F
       run: |
         xcodebuild -project CDDA.xcodeproj \
-                   -scheme CDDA Release \
+                   -scheme CDDA \
                    -configuration ${{ github.event.inputs.configuration }} \
                    -destination 'generic/platform=iOS' \
                    -archivePath $PWD/build/CDDA0F.xcarchive \
