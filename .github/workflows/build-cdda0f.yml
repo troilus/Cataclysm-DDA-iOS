@@ -35,15 +35,20 @@ jobs:
     - name: Install dependencies
       run: |
         pod install --repo-update
-          
+        
+    - name: List available schemes
+      run: |
+        xcodebuild -workspace CDDA.xcworkspace -list
+
     - name: Build CDDA0F
       run: |
         xcodebuild -workspace CDDA.xcworkspace \
-                   -scheme CDDA0F \
+                   -scheme CDDA \
                    -configuration ${{ github.event.inputs.configuration }} \
                    -destination generic/platform=iOS \
                    -archivePath $PWD/build/CDDA0F.xcarchive \
                    archive \
+                   -target CDDA0F \
                    CODE_SIGNING_ALLOWED=NO \
                    ENABLE_BITCODE=NO
                      
