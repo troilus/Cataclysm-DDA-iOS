@@ -1,117 +1,95 @@
-name: Build Unsigned IPA (0.F)
+name: Build CDDA0F IPA
 
 on:
   workflow_dispatch:
     inputs:
-      scheme:
-        description: 'Build scheme to use'
+      configuration:
+        description: 'Build Configuration'
         required: true
-        default: 'CDDA0F'
+        default: 'Release'
         type: choice
         options:
-          - CDDA0F
-          - CDDA0G
-          - CBN
-          - CBNfreeIAP
-
-env:
-  SCHEME: ${{ github.event.inputs.scheme || 'CDDA0F' }}
+          - Release
+          - Debug
 
 jobs:
-  build-ipa:
-    name: Build Unsigned IPA
+  build:
     runs-on: macos-latest
     
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Install CocoaPods
+      run: |
+        sudo gem install cocoapods
+        pod --version
+        
+    - name: Install dependencies
+      run: |
+        pod install --repo-update
+        
+    - name: List available schemes
+      run: |
+        echo "=== Workspace Schemes ==="
+        xcodebuild -workspace CDDA.xcworkspace -list
+        
+    - name: Build CDDA0F
+      run: |
+        xcodebuild -workspace CDDA.xcworkspace \
+                   -scheme "All (iOS)" \
+                   -configuration ${{ github.event.inputs.configuration }} \
+                   -destination 'generic/platform=iOS' \
+                   -archivePath $PWD/build/CDDA0F.xcarchive \
+                   archive \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_ALLOWED=NO \
+                   CODE_SIGNING_REQUIRED=NO \
+                   ENABLE_BITCODE=NO
+                     
+    - name: Create Export Options Plist
+      run: |
+        cat > exportOptions.plist << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>method</key>
+            <string>release</string>
+            <key>compileBitcode</key>
+            <false/>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <false/>
+        </dict>
+        </plist>
+        EOF
+        
+    - name: Export IPA
+      run: |
+        xcodebuild -exportArchive \
+                   -archivePath $PWD/build/CDDA0F.xcarchive \
+                   -exportPath $PWD/build \
+                   -exportOptionsPlist exportOptions.plist
+                     
+    - name: Upload IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: CDDA0F-${{ github.event.inputs.configuration }}-unsigned
+        path: build/*.ipa
+        retention-days: 7
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.2'
-          bundler-cache: true
-
-      - name: Install CocoaPods
-        run: |
-          bundle install
-          bundle exec pod install
-        working-directory: ${{ github.workspace }}
-
-      - name: Select Xcode Version
-        run: |
-          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-          xcodebuild -version
-
-      - name: Build Unsigned IPA
-        run: |
-          # Create build directory
-          mkdir -p build
-          
-          # Build the IPA without code signing
-          xcodebuild \
-            -workspace "${SCHEME}.xcworkspace" \
-            -scheme "${SCHEME}" \
-            -configuration Release \
-            -archivePath "./build/${SCHEME}.xcarchive" \
-            -sdk iphoneos \
-            -destination "generic/platform=iOS" \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            archive
-        working-directory: ${{ github.workspace }}
-
-      - name: Export Unsigned IPA
-        run: |
-          # Create export options plist
-          cat > exportOptions.plist << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>release</string>
-              <key>compileBitcode</key>
-              <false/>
-              <key>uploadBitcode</key>
-              <false/>
-              <key>uploadSymbols</key>
-              <false/>
-          </dict>
-          </plist>
-          EOF
-          
-          # Export the IPA
-          xcodebuild \
-            -exportArchive \
-            -archivePath "./build/${SCHEME}.xcarchive" \
-            -exportPath "./build" \
-            -exportOptionsPlist exportOptions.plist
-        working-directory: ${{ github.workspace }}
-
-      - name: Package IPA
-        run: |
-          # Rename IPA with scheme name and timestamp
-          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-          IPA_NAME="${SCHEME}_${TIMESTAMP}_unsigned.ipa"
-          mv "./build/${SCHEME}.ipa" "./build/${IPA_NAME}"
-          echo "IPA_NAME=${IPA_NAME}" >> $GITHUB_ENV
-        working-directory: ${{ github.workspace }}
-
-      - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: unsigned-ipa-${{ env.SCHEME }}
-          path: build/${{ env.IPA_NAME }}
-          retention-days: 7
-
-      - name: Upload dSYM Symbols
-        uses: actions/upload-artifact@v4
-        with:
-          name: dsym-${{ env.SCHEME }}
-          path: build/${{ env.SCHEME }}.xcarchive/dSYMs/
-          retention-days: 7
+    - name: Upload dSYM
+      uses: actions/upload-artifact@v4
+      with:
+        name: CDDA0F-dSYM
+        path: build/CDDA0F.xcarchive/dSYMs/
+        retention-days: 7
