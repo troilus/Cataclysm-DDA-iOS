@@ -1,7 +1,7 @@
 name: Build CDDA0F IPA
 
 on:
-  push
+  push:
     branches:
       - 0.F
   workflow_dispatch:
