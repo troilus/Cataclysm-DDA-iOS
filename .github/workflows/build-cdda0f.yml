@@ -41,6 +41,68 @@ jobs:
         echo "=== Workspace Schemes ==="
         xcodebuild -workspace CDDA.xcworkspace -list
         
+    - name: List project schemes
+      run: |
+        echo "=== Project Schemes ==="
+        xcodebuild -project CDDA.xcodeproj -list
+        
+    - name: Create CDDA0F scheme
+      run: |
+        mkdir -p CDDA.xcworkspace/xcshareddata/xcschemes
+        if [ ! -f "CDDA.xcworkspace/xcshareddata/xcschemes/CDDA0F.xcscheme" ]; then
+          cat > CDDA.xcworkspace/xcshareddata/xcschemes/CDDA0F.xcscheme << 'SCHEMEEOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <Scheme
+             LastUpgradeVersion = "1500"
+             version = "1.7">
+             <BuildAction
+                parallelizeBuildables = "YES"
+                buildImplicitDependencies = "YES">
+                <BuildActionEntries>
+                   <BuildActionEntry
+                      buildForTesting = "YES"
+                      buildForRunning = "YES"
+                      buildForProfiling = "YES"
+                      buildForArchiving = "YES"
+                      buildForAnalyzing = "YES">
+                      <BuildableReference
+                         BuildableIdentifier = "primary"
+                         BlueprintIdentifier = "CDDA0F"
+                         BuildableName = "CDDA0F.app"
+                         BlueprintName = "CDDA0F"
+                         ReferencedContainer = "container:CDDA.xcodeproj">
+                      </BuildableReference>
+                   </BuildActionEntry>
+                </BuildActionEntries>
+             </BuildAction>
+             <RunAction
+                codeSign = "NO"
+                selectedDebuggerIdentifier = ""
+                selectedLauncherIdentifier = ""
+                launchStyle = "0"
+                useCustomWorkingDirectory = "NO"
+                ignoresPersistentStateOnLaunch = "NO"
+                debugDocumentVersioning = "YES"
+                debugServiceExtension = "internal"
+                allowLocationSimulation = "YES">
+                <BuildConfiguration
+                   BuildableIdentifier = "primary"
+                   BlueprintIdentifier = "CDDA0F"
+                   BuildableName = "CDDA0F.app"
+                   BlueprintName = "CDDA0F"
+                   ReferencedContainer = "container:CDDA.xcodeproj">
+                </BuildConfiguration>
+             </RunAction>
+             <ArchiveAction
+                buildConfiguration = "Release"
+                revealArchiveInOrganizer = "YES"
+                customArchiveName = "CDDA0F">
+             </ArchiveAction>
+          </Scheme>
+          SCHEMEEOF
+        fi
+        echo "Scheme created successfully"
+        
     - name: Build CDDA0F
       run: |
         xcodebuild -workspace CDDA.xcworkspace \
