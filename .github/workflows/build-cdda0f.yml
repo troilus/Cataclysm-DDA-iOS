@@ -1,7 +1,7 @@
 name: Build CDDA0F IPA
-  
-on:  
-  workflow_dispatch:  # 手动触发
+
+on:
+  workflow_dispatch:
     inputs:
       configuration:
         description: 'Build configuration'
@@ -15,40 +15,42 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-      
+    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
-          
+        
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
-          
+        
     - name: Install CocoaPods
       run: |
         sudo gem install cocoapods
         pod --version
-      
+        
     - name: Install dependencies
       run: |
         pod install --repo-update
         
-    - name: List available schemes
+    - name: List available schemes and targets
       run: |
+        echo "=== Workspace Schemes ==="
         xcodebuild -workspace CDDA.xcworkspace -list
-
-    - name: Build CDDA0F
+        echo "=== Project Targets ==="
+        xcodebuild -project CDDA.xcodeproj -list
+        
+    - name: Build CDDA0F using project
       run: |
-        xcodebuild -workspace CDDA.xcworkspace \
-                   -scheme CDDA \
+        xcodebuild -project CDDA.xcodeproj \
+                   -target CDDA0F \
                    -configuration ${{ github.event.inputs.configuration }} \
                    -destination generic/platform=iOS \
                    -archivePath $PWD/build/CDDA0F.xcarchive \
                    archive \
-                   -target CDDA0F \
                    CODE_SIGNING_ALLOWED=NO \
                    ENABLE_BITCODE=NO
                      
