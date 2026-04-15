@@ -52,7 +52,8 @@ jobs:
                    CODE_SIGN_IDENTITY="" \
                    CODE_SIGNING_ALLOWED=NO \
                    CODE_SIGNING_REQUIRED=NO \
-                   ENABLE_BITCODE=NO
+                   ENABLE_BITCODE=NO \
+                   IPHONEOS_DEPLOYMENT_TARGET=12.0
                      
     - name: Create Export Options Plist
       run: |
