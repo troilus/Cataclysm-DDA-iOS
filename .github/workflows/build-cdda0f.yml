@@ -1,6 +1,6 @@
 name: Build CDDA0F IPA
-
-on:
+  
+on:  
   workflow_dispatch:
     inputs:
       configuration:
@@ -12,55 +12,51 @@ on:
         - Release
         - Debug
   
-jobs:
+jobs:  
   build:
     runs-on: macos-latest
-    
+      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
-        
+          
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
-        
+          
     - name: Install CocoaPods
       run: |
         sudo gem install cocoapods
         pod --version
-        
+          
     - name: Install dependencies
       run: |
         pod install --repo-update
-        
-    - name: List available schemes and targets
+          
+    - name: List available schemes
       run: |
-        echo "=== Workspace Schemes ==="
-        xcodebuild -workspace CDDA.xcworkspace -list
-        echo "=== Project Targets ==="
         xcodebuild -project CDDA.xcodeproj -list
-        
-    - name: Build CDDA0F using project
+      
+    - name: Build CDDA0F app directly
       run: |
         xcodebuild -project CDDA.xcodeproj \
                    -target CDDA0F \
                    -configuration ${{ github.event.inputs.configuration }} \
                    -destination generic/platform=iOS \
-                   -archivePath $PWD/build/CDDA0F.xcarchive \
-                   archive \
+                   -derivedDataPath $PWD/build/DerivedData \
+                   build \
                    CODE_SIGNING_ALLOWED=NO \
                    ENABLE_BITCODE=NO
-                     
-    - name: Export IPA
+      
+    - name: Create IPA manually
       run: |
-        xcodebuild -exportArchive \
-                   -archivePath $PWD/build/CDDA0F.xcarchive \
-                   -exportPath $PWD/build \
-                   -exportOptionsPlist exportOptions.plist
-                     
+        mkdir -p build/Payload
+        cp -r build/DerivedData/Build/Products/${{ github.event.inputs.configuration }}-iphoneos/CDDA0F.app build/Payload/
+        cd build && zip -r CDDA0F.ipa Payload/
+      
     - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
