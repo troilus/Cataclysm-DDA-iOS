@@ -8,7 +8,7 @@ on:
     inputs:
       configuration:
         description: 'Build Configuration'
-        required: true
+        required: false
         default: 'Release'
         type: choice
         options:
@@ -45,19 +45,22 @@ jobs:
         xcodebuild -workspace CDDA.xcworkspace -list
         
     - name: Build CDDA0F
+      env:
+        CONFIGURATION: ${{ github.event.inputs.configuration || 'Release' }}
       run: |
         # 确定 scheme 名称
-        if [ "${{ github.event.inputs.configuration }}" = "Release" ]; then
+        if [ "$CONFIGURATION" = "Release" ]; then
           SCHEME="CDDA Release"
         else
           SCHEME="CDDA Debug"
         fi
-        
+
         echo "Using scheme: $SCHEME"
-        
+        echo "Using configuration: $CONFIGURATION"
+
         xcodebuild -workspace CDDA.xcworkspace \
                    -scheme "$SCHEME" \
-                   -configuration ${{ github.event.inputs.configuration }} \
+                   -configuration "$CONFIGURATION" \
                    -destination 'generic/platform=iOS' \
                    -archivePath $PWD/build/CDDA0F.xcarchive \
                    archive \
@@ -96,7 +99,7 @@ jobs:
     - name: Upload IPA
       uses: actions/upload-artifact@v4
       with:
-        name: CDDA0F-${{ github.event.inputs.configuration }}-unsigned
+        name: CDDA0F-${{ github.event.inputs.configuration || 'Release' }}-unsigned
         path: build/*.ipa
         retention-days: 7
 
