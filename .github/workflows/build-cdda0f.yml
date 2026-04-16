@@ -33,11 +33,29 @@ jobs:
       with:
         submodules: recursive
         
-    - name: Initialize worktrees
-      run: |
-        chmod +x scripts/init_worktrees.sh
-        cd scripts
-        ./init_worktrees.sh
+    - name: Initialize worktrees  
+      run: |  
+        # 检查当前分支和文件结构  
+        echo "Current branch: $(git branch --show-current)"  
+        echo "Repository structure:"  
+        ls -la  
+          
+        # 检查scripts目录  
+        if [ -d "scripts" ]; then  
+          echo "Scripts directory found:"  
+          ls -la scripts/  
+        else  
+          echo "Scripts directory not found, proceeding with inline commands"  
+        fi  
+          
+        # 直接执行worktree初始化  
+        cd submodule/Cataclysm-DDA  
+        git worktree add ../../worktree/Cataclysm-DDA/0.F 0.F-branch  
+        cd ../..  
+          
+        # 验证创建成功  
+        echo "Worktree created:"  
+        ls -la worktree/Cataclysm-DDA/
         
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
