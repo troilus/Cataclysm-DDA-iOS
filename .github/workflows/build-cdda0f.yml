@@ -46,8 +46,17 @@ jobs:
         
     - name: Build CDDA0F
       run: |
+        # 确定 scheme 名称
+        if [ "${{ github.event.inputs.configuration }}" = "Release" ]; then
+          SCHEME="CDDA Release"
+        else
+          SCHEME="CDDA Debug"
+        fi
+        
+        echo "Using scheme: $SCHEME"
+        
         xcodebuild -workspace CDDA.xcworkspace \
-                   -scheme "CDDA ${{ github.event.inputs.configuration }}" \
+                   -scheme "$SCHEME" \
                    -configuration ${{ github.event.inputs.configuration }} \
                    -destination 'generic/platform=iOS' \
                    -archivePath $PWD/build/CDDA0F.xcarchive \
