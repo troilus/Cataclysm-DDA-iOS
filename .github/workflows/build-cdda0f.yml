@@ -35,7 +35,6 @@ jobs:
         
     - name: Initialize worktrees
       run: |
-        chmod +x scripts/init_worktrees.sh
         cd scripts
         ./init_worktrees.sh
         
