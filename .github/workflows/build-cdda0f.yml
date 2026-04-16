@@ -1,5 +1,5 @@
 name: Build CDDA0F IPA
-
+  
 on:
   push:
     branches:
@@ -26,18 +26,23 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    
+      
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: recursive
         
+    - name: Initialize worktrees
+      run: |
+        cd scripts
+        ./init_worktrees.sh
+        
     - name: Setup Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: latest-stable
-        
+          
     - name: Install CocoaPods
       run: |
         sudo gem install cocoapods
@@ -65,8 +70,10 @@ jobs:
                    CODE_SIGNING_REQUIRED=NO \
                    ENABLE_BITCODE=NO \
                    IPHONEOS_DEPLOYMENT_TARGET=12.0 \
-                   ONLY_ACTIVE_ARCH=NO
-                     
+                   ONLY_ACTIVE_ARCH=NO \
+                   OTHER_CFLAGS="-DZ_HAVE_UNISTD_H=1 -DHAVE_UNISTD_H=1" \
+                   GCC_PREPROCESSOR_DEFINITIONS="$(inherited) FT2_BUILD_LIBRARY=1"
+                       
     - name: Create Export Options Plist
       run: |
         cat > exportOptions.plist << 'EOF'
@@ -99,7 +106,7 @@ jobs:
         name: CDDA0F-${{ github.event.inputs.configuration }}-unsigned
         path: build/*.ipa
         retention-days: 7
-
+  
     - name: Upload dSYM
       uses: actions/upload-artifact@v4
       with:
