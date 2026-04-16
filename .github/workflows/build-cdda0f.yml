@@ -5,23 +5,15 @@ on:
     branches:
       - 0.F
   workflow_dispatch:
-      inputs:
-        configuration:
-          description: 'Build Configuration'
-          required: true
-          default: 'Release'
-          type: choice
-          options:
-            - Release
-            - Debug
-        scheme:
-          description: 'Build Scheme'
-          required: true
-          default: 'CDDA Release'
-          type: choice
-          options:
-            - CDDA Release
-            - CDDA Debug
+    inputs:
+      configuration:
+        description: 'Build Configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
 
 jobs:
   build:
@@ -54,18 +46,26 @@ jobs:
         
     - name: Build CDDA0F
       run: |
+        # 确定 scheme 名称
+        if [ "${{ github.event.inputs.configuration }}" = "Release" ]; then
+          SCHEME="CDDA Release"
+        else
+          SCHEME="CDDA Debug"
+        fi
+        
+        echo "Using scheme: $SCHEME"
+        
         xcodebuild -workspace CDDA.xcworkspace \
-                   -scheme "${{ github.event.inputs.scheme }}" \
-                   -configuration "${{ github.event.inputs.configuration }}" \
+                   -scheme "$SCHEME" \
+                   -configuration ${{ github.event.inputs.configuration }} \
                    -destination 'generic/platform=iOS' \
-                   -archivePath "$PWD/build/CDDA0F.xcarchive" \
+                   -archivePath $PWD/build/CDDA0F.xcarchive \
                    archive \
                    CODE_SIGN_IDENTITY="" \
                    CODE_SIGNING_ALLOWED=NO \
                    CODE_SIGNING_REQUIRED=NO \
                    ENABLE_BITCODE=NO \
-                   IPHONEOS_DEPLOYMENT_TARGET=12.0 \
-                   ONLY_ACTIVE_ARCH=NO
+                   IPHONEOS_DEPLOYMENT_TARGET=12.0
                      
     - name: Create Export Options Plist
       run: |
